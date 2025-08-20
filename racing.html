@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Racing Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ffffff, #cccccc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        canvas {
+            border: 3px solid #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+            background: #333333;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .controls {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #cccccc;
+        }
+
+        .controls p {
+            margin: 5px 0;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ffffff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #ffffff;
+            text-align: center;
+            display: none;
+        }
+
+        .restart-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            background: #cccccc;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← Back to Games</a>
+    
+    <div class="game-container">
+        <h1>RACING</h1>
+        <div class="ui-overlay">
+            <div>Speed: <span id="speed">0</span> mph</div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Distance: <span id="distance">0</span>m</div>
+        </div>
+        <canvas id="racing" width="400" height="600"></canvas>
+        <div class="controls">
+            <p>Use WASD or Arrow Keys to steer</p>
+            <p>Avoid obstacles and collect coins!</p>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Distance: <span id="finalDistance">0</span>m</p>
+            <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('racing');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameRunning = true;
+        let keys = {};
+        let score = 0;
+        let distance = 0;
+        let speed = 0;
+        let roadOffset = 0;
+
+        // Player car
+        const player = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 80,
+            width: 30,
+            height: 50,
+            speed: 5,
+            maxSpeed: 8
+        };
+
+        // Game objects
+        let obstacles = [];
+        let coins = [];
+        let roadLines = [];
+
+        // Initialize road lines
+        for (let i = 0; i < 15; i++) {
+            roadLines.push({
+                x: canvas.width / 2 - 2,
+                y: i * 50,
+                width: 4,
+                height: 25
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Game functions
+        function spawnObstacle() {
+            if (Math.random() < 0.02 + distance * 0.00001) {
+                const lanes = [canvas.width * 0.25, canvas.width * 0.5, canvas.width * 0.75];
+                const lane = lanes[Math.floor(Math.random() * lanes.length)];
+                
+                obstacles.push({
+                    x: lane - 15,
+                    y: -50,
+                    width: 30,
+                    height: 40,
+                    speed: 3 + distance * 0.001
+                });
+            }
+        }
+
+        function spawnCoin() {
+            if (Math.random() < 0.015) {
+                coins.push({
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: -20,
+                    width: 15,
+                    height: 15,
+                    speed: 2 + distance * 0.001,
+                    collected: false
+                });
+            }
+        }
+
+        function updatePlayer() {
+            // Horizontal movement
+            if (keys['a'] || keys['arrowleft']) {
+                player.x -= player.speed;
+            }
+            if (keys['d'] || keys['arrowright']) {
+                player.x += player.speed;
+            }
+
+            // Vertical movement (limited)
+            if (keys['w'] || keys['arrowup']) {
+                player.y = Math.max(canvas.height - 150, player.y - 2);
+                speed = Math.min(player.maxSpeed, speed + 0.2);
+            } else if (keys['s'] || keys['arrowdown']) {
+                player.y = Math.min(canvas.height - 60, player.y + 2);
+                speed = Math.max(0, speed - 0.2);
+            } else {
+                speed = Math.max(0, speed - 0.1);
+            }
+
+            // Keep player on road
+            player.x = Math.max(30, Math.min(canvas.width - 60, player.x));
+
+            // Update distance and score
+            distance += speed * 0.1;
+            score += Math.floor(speed * 0.1);
+        }
+
+        function updateObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                obstacle.y += obstacle.speed + speed;
+
+                // Remove obstacles that are off screen
+                if (obstacle.y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                // Check collision with player
+                if (isColliding(player, obstacle)) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        function updateCoins() {
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const coin = coins[i];
+                coin.y += coin.speed + speed;
+
+                // Remove coins that are off screen
+                if (coin.y > canvas.height) {
+                    coins.splice(i, 1);
+                    continue;
+                }
+
+                // Check collision with player
+                if (isColliding(player, coin) && !coin.collected) {
+                    coin.collected = true;
+                    score += 50;
+                    coins.splice(i, 1);
+                }
+            }
+        }
+
+        function updateRoadLines() {
+            roadOffset += speed + 2;
+            
+            for (let line of roadLines) {
+                line.y += speed + 2;
+                if (line.y > canvas.height) {
+                    line.y = -25;
+                }
+            }
+        }
+
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function drawRoad() {
+            // Road background
+            ctx.fillStyle = '#444444';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Road edges
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(20, 0, 5, canvas.height);
+            ctx.fillRect(canvas.width - 25, 0, 5, canvas.height);
+
+            // Center lines
+            ctx.fillStyle = '#ffff00';
+            for (let line of roadLines) {
+                ctx.fillRect(line.x, line.y, line.width, line.height);
+            }
+        }
+
+        function drawPlayer() {
+            // Car body
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Car details
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 5, player.y + 5, 20, 8);
+            ctx.fillRect(player.x + 5, player.y + 37, 20, 8);
+
+            // Car wheels
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(player.x - 2, player.y + 10, 6, 12);
+            ctx.fillRect(player.x + player.width - 4, player.y + 10, 6, 12);
+            ctx.fillRect(player.x - 2, player.y + 28, 6, 12);
+            ctx.fillRect(player.x + player.width - 4, player.y + 28, 6, 12);
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                // Obstacle body
+                ctx.fillStyle = '#8B0000';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+                // Obstacle details
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, 20, 6);
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 29, 20, 6);
+
+                // Obstacle wheels
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(obstacle.x - 2, obstacle.y + 8, 6, 10);
+                ctx.fillRect(obstacle.x + obstacle.width - 4, obstacle.y + 8, 6, 10);
+                ctx.fillRect(obstacle.x - 2, obstacle.y + 22, 6, 10);
+                ctx.fillRect(obstacle.x + obstacle.width - 4, obstacle.y + 22, 6, 10);
+            });
+        }
+
+        function drawCoins() {
+            coins.forEach(coin => {
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFA500';
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('speed').textContent = Math.floor(speed * 10);
+            document.getElementById('score').textContent = score;
+            document.getElementById('distance').textContent = Math.floor(distance);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalDistance').textContent = Math.floor(distance);
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function restartGame() {
+            gameRunning = true;
+            score = 0;
+            distance = 0;
+            speed = 0;
+            player.x = canvas.width / 2 - 15;
+            player.y = canvas.height - 80;
+            obstacles = [];
+            coins = [];
+            document.getElementById('gameOver').style.display = 'none';
+        }
+
+        function gameLoop() {
+            if (!gameRunning) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw road
+            drawRoad();
+
+            // Update game objects
+            updatePlayer();
+            updateObstacles();
+            updateCoins();
+            updateRoadLines();
+
+            // Spawn new objects
+            spawnObstacle();
+            spawnCoin();
+
+            // Draw game objects
+            drawPlayer();
+            drawObstacles();
+            drawCoins();
+
+            // Update UI
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        gameLoop();
+    </script>
+</body>
+</html>
