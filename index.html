@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Portal - Classic Games Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ffffff, #cccccc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #cccccc;
+            font-weight: 400;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .game-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .game-description {
+            font-size: 1rem;
+            color: #cccccc;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .play-button {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .play-button:hover {
+            background: #cccccc;
+            transform: translateY(-2px);
+        }
+
+        .existing-games {
+            margin-top: 60px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .existing-games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .existing-game-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .existing-game-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .existing-game-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .existing-game-description {
+            font-size: 0.9rem;
+            color: #aaaaaa;
+            margin-bottom: 15px;
+        }
+
+        .existing-play-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .existing-play-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #888888;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-card {
+                padding: 20px;
+            }
+            
+            .game-icon {
+                font-size: 3rem;
+            }
+            
+            .game-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GAME PORTAL</h1>
+            <p class="subtitle">Classic Games Collection - Choose Your Adventure</p>
+        </header>
+
+        <main>
+            <div class="games-grid">
+                <div class="game-card" onclick="window.location.href='pong.html'">
+                    <div class="game-icon">🏓</div>
+                    <h2 class="game-title">PONG</h2>
+                    <p class="game-description">
+                        The classic arcade game that started it all. Control your paddle with the mouse and compete against AI. 
+                        First to 5 points wins!
+                    </p>
+                    <a href="pong.html" class="play-button">Play Pong</a>
+                </div>
+
+                <div class="game-card" onclick="window.location.href='racing.html'">
+                    <div class="game-icon">🏎️</div>
+                    <h2 class="game-title">RACING</h2>
+                    <p class="game-description">
+                        High-speed top-down racing action. Dodge obstacles, collect coins, and see how far you can go. 
+                        Use WASD or arrow keys to control your car.
+                    </p>
+                    <a href="racing.html" class="play-button">Start Racing</a>
+                </div>
+            </div>
+
+            <div class="existing-games">
+                <h2 class="section-title">More Games Available</h2>
+                <div class="existing-games-grid">
+                    <div class="existing-game-card">
+                        <h3 class="existing-game-title">Fighting Game</h3>
+                        <p class="existing-game-description">
+                            Ocean-themed fighting adventure with enemies, coins, and power-ups
+                        </p>
+                        <a href="public/index.html" class="existing-play-button">Play Fighting Game</a>
+                    </div>
+
+                    <div class="existing-game-card">
+                        <h3 class="existing-game-title">Game Portal</h3>
+                        <p class="existing-game-description">
+                            Alternative game portal with different game collection
+                        </p>
+                        <a href="public/game.html" class="existing-play-button">Visit Portal</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Game Portal. Built with HTML5 Canvas and JavaScript.</p>
+            <p>Use keyboard and mouse controls to play. Have fun!</p>
+        </footer>
+    </div>
+
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameCards = document.querySelectorAll('.game-card');
+            
+            gameCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.08)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.05)';
+                });
+            });
+
+            // Prevent double-click issues
+            const playButtons = document.querySelectorAll('.play-button');
+            playButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        });
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '1') {
+                window.location.href = 'pong.html';
+            } else if (e.key === '2') {
+                window.location.href = 'racing.html';
+            }
+        });
+    </script>
+</body>
+</html>
